@@ -5,9 +5,7 @@
 - [Installation](#installation)
   - [Cura Slicer Script Setup](#cura-slicer-script-setup)
   - [Printer Configuration](#printer-configuration)
-- [Nozzle Profiles](#nozzle-profiles)
-  - [0.4mm Nozzle Profile](#04mm-nozzle-profile)
-  - [0.6mm Nozzle Profile](#06mm-nozzle-profile)
+- [Features](#features)
 - [Macros](#macros)
   - [`BED_MESH_CALIBRATE`](#bed_mesh_calibrate)
   - [`BED_MESH_PURGE_LINE`](#bed_mesh_purge_line)
@@ -16,12 +14,13 @@
   - [`S__START_POSITION`](#s__start_position)
   - [`S__PRINTER_START`](#s__printer_start)
   - [`S__PRINTER_END`](#s__printer_end)
+- [Configuration](#configuration)
+  - [Pressure Advance](#pressure-advance)
+  - [Customizing Settings](#customizing-settings)
 - [Funding](#funding)
 - [License](#license)
 
-Enhance your 3D printing experience on the Ender 3 S1 Pro with s1pper macros. These custom macros replace the default Creality and Cura macros, bringing in a dynamic purge line near the mesh area for a smarter, cleaner start to every print.
-
-**Now supports both 0.4mm and 0.6mm nozzle profiles with optimized settings for each!**
+Enhance your 3D printing experience on the Ender 3 S1 Pro with s1pper macros. These custom macros replace the default Creality and Cura macros, bringing in adaptive bed mesh calibration and a dynamic purge line that scales with your print size for a smarter, cleaner start to every print.
 
 ## Installation
 
@@ -52,65 +51,44 @@ S__PRINTER_END
 
 1. Copy the entire `s1pper` folder to your printer's configuration directory
 2. Open `printer.cfg` on your printer
-3. Add the following line to include s1pper (defaults to 0.4mm nozzle):
-
-```
-[include s1pper/s1pper.cfg]
-```
-
-4. If using a 0.6mm nozzle, use this instead:
+3. Add the following line to include s1pper macros:
 
 ```cfg
-[include s1pper/0.6mm/s1pper.cfg]
-```
-
-5. Save the file and restart your printer firmware
-
-```G-Code
-[include s1pper.cfg]
-```
-
-## Nozzle Profiles
-
-This system supports both 0.4mm and 0.6mm nozzles with dedicated optimized settings. The root files (`s1pper.cfg` and `s1pper-automesh.cfg`) load the 0.4mm profile by default.
-
-### Switching Between Nozzles
-
-**To use 0.4mm nozzle (default):**
-```
 [include s1pper/s1pper.cfg]
 ```
 
-**To use 0.6mm nozzle:**
-```
-[include s1pper/0.6mm/s1pper.cfg]
-```
+4. Save the file and restart your printer firmware
 
-### 0.4mm Nozzle Profile
+## Features
 
-**Default settings for standard 0.4mm nozzles:**
-- Default temperatures: 190°C extruder, 60°C bed (material profiles will override as needed)
-- Standard flow rate (100%)
-- Retraction: 5.0mm (optimized for standard nozzle)
-- Pressure advance: 0.04 (balanced for quality and speed)
-- Purge line: 15mm extrusion optimized for 0.4mm flow
-- Acceleration: 3000mm/s² (standard for quality prints)
-- Mesh offset: 5.0mm (standard probing distance)
-- Probe samples: 2 per point (balanced speed/accuracy)
-- Timelapse support with TIMELAPSE_TAKE_FRAME macro
+**Adaptive Bed Mesh Calibration:**
+- Dynamic mesh probing based on actual print area (saves time on small prints)
+- Configurable mesh offset (5.0mm default, adjustable in macro)
+- Probe count scales with print size (minimum 4x4, configurable)
+- Supports both bicubic and lagrange algorithms
+- 2 samples per probe point for accuracy (adjustable)
 
-### 0.6mm Nozzle Profile
+**Intelligent Purge Line:**
+- Dynamically scales to 1.5x your print area height
+- Minimum 50mm purge ensures adequate priming
+- Automatically capped at bed maximum (220mm Y-axis)
+- Proportional extrusion based on purge length
+- Starts near print area for efficient workflow
+- Dual-pass purge for consistent flow
 
-**Optimized settings for 0.6mm nozzles:**
-- Default temperatures: 190°C extruder, 60°C bed (material profiles will override as needed)
-- Flow rate: 90% (reduced to prevent over-extrusion)
-- Retraction: 6.5mm (increased for larger nozzle)
-- Pressure advance: 0 (disabled to eliminate Y-axis waves)
-- Purge line: 20mm extrusion optimized for 0.6mm flow
-- Acceleration: 1500mm/s² (reduced for smoother motion)
-- Mesh offset: 3.0mm (faster probing)
-- Probe samples: 1 per point (optimized for speed)
-- 60-second thermal stabilization for cold environments
+**Smart Print Start Sequence:**
+1. Homes all axes
+2. Preheats bed and extruder to target temperatures
+3. Performs adaptive mesh calibration for print area
+4. Executes dynamic purge line
+5. Resets extruder position and Z-height
+6. Ready to print!
+
+**Configuration:**
+- Pressure advance enabled (0.04 default, tunable)
+- Default temperatures: 190°C extruder / 60°C bed
+- Material profiles from slicer override defaults
+- Works with Cura's KlipperPrintArea.py script
 
 ## Macros
 
@@ -142,9 +120,53 @@ A comprehensive start macro that configures the printer for absolute positioning
 
 A consolidated end macro, amalgamating actions from Creality and Cura with custom tweaks, to gracefully conclude the print job by turning off essential components and repositioning the print head.
 
+## Configuration
+
+### Pressure Advance
+
+Pressure advance is enabled by default in `printer.cfg` with a starting value of `0.04`. This helps compensate for pressure buildup in the nozzle during direction changes, improving corner quality.
+
+**To calibrate pressure advance for your specific filament:**
+
+1. Print a calibration test using the `TUNING_TOWER` command:
+
+```gcode
+TUNING_TOWER COMMAND=SET_PRESSURE_ADVANCE PARAMETER=ADVANCE START=0 FACTOR=.005
+```
+
+2. Examine the test print to find where corners look best
+3. Calculate the optimal value: `pressure_advance = start + (height_of_best_layer * factor)`
+4. Update the value in your `printer.cfg` under `[extruder]`:
+
+```cfg
+pressure_advance: 0.04  # Replace with your calibrated value
+```
+
+5. Save and restart Klipper
+
+**Typical ranges:**
+- Direct drive extruders: 0.02 - 0.08
+- Bowden extruders: 0.30 - 0.70
+
+### Customizing Settings
+
+You can customize various parameters in the macro files:
+
+**In `s1pper-automesh.cfg`:**
+- `mesh_area_offset`: Clearance between print area and probe area (default: 5.0mm)
+- `probe_samples`: Number of samples per probe point (default: 2)
+- `min_probe_count`: Minimum mesh points (default: 4x4)
+- `probe_count_scale_factor`: Scales probe density (default: 1.5)
+- `min_purge_length`: Minimum purge line length (default: 50mm)
+
+**In `s1pper.cfg`:**
+- Default temperatures in `S__PRINTER_PREHEAT`
+- Start position coordinates in `S__START_POSITION`
+- End position and retraction in `S__PRINTER_END`
+
 ## Funding
 
-Discovering value in this project or employing it in a commercial setting? Your generous donation is a stepping stone to continuous improvement and open-source advocacy. 
+Discovering value in this project or employing it in a commercial setting? Your generous donation is a stepping stone to continuous improvement and open-source advocacy.
 
 Here are some avenues to contribute:
 
