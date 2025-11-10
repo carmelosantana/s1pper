@@ -5,6 +5,9 @@
 - [Installation](#installation)
   - [Cura Slicer Script Setup](#cura-slicer-script-setup)
   - [Printer Configuration](#printer-configuration)
+- [Nozzle Profiles](#nozzle-profiles)
+  - [0.4mm Nozzle Profile](#04mm-nozzle-profile)
+  - [0.6mm Nozzle Profile](#06mm-nozzle-profile)
 - [Macros](#macros)
   - [`BED_MESH_CALIBRATE`](#bed_mesh_calibrate)
   - [`BED_MESH_PURGE_LINE`](#bed_mesh_purge_line)
@@ -17,6 +20,8 @@
 - [License](#license)
 
 Enhance your 3D printing experience on the Ender 3 S1 Pro with s1pper macros. These custom macros replace the default Creality and Cura macros, bringing in a dynamic purge line near the mesh area for a smarter, cleaner start to every print.
+
+**Now supports both 0.4mm and 0.6mm nozzle profiles with optimized settings for each!**
 
 ## Installation
 
@@ -45,16 +50,67 @@ S__PRINTER_END
 
 ### Printer Configuration
 
-1. On your printer's system, create two new files as follows:
-   - `s1pper.cfg`
-   - `s1pper-automesh.cfg`
-2. Copy and paste the respective contents from this repository into the newly created files on your printer.
-3. Open `printer.cfg` on your printer.
-4. Add the following line to the top of the file:
+1. Copy the entire `s1pper` folder to your printer's configuration directory
+2. Open `printer.cfg` on your printer
+3. Add the following line to include s1pper (defaults to 0.4mm nozzle):
+
+```
+[include s1pper/s1pper.cfg]
+```
+
+4. If using a 0.6mm nozzle, use this instead:
+
+```cfg
+[include s1pper/0.6mm/s1pper.cfg]
+```
+
+5. Save the file and restart your printer firmware
 
 ```G-Code
 [include s1pper.cfg]
 ```
+
+## Nozzle Profiles
+
+This system supports both 0.4mm and 0.6mm nozzles with dedicated optimized settings. The root files (`s1pper.cfg` and `s1pper-automesh.cfg`) load the 0.4mm profile by default.
+
+### Switching Between Nozzles
+
+**To use 0.4mm nozzle (default):**
+```
+[include s1pper/s1pper.cfg]
+```
+
+**To use 0.6mm nozzle:**
+```
+[include s1pper/0.6mm/s1pper.cfg]
+```
+
+### 0.4mm Nozzle Profile
+
+**Default settings for standard 0.4mm nozzles:**
+- Default temperatures: 190°C extruder, 60°C bed (material profiles will override as needed)
+- Standard flow rate (100%)
+- Retraction: 5.0mm (optimized for standard nozzle)
+- Pressure advance: 0.04 (balanced for quality and speed)
+- Purge line: 15mm extrusion optimized for 0.4mm flow
+- Acceleration: 3000mm/s² (standard for quality prints)
+- Mesh offset: 5.0mm (standard probing distance)
+- Probe samples: 2 per point (balanced speed/accuracy)
+- Timelapse support with TIMELAPSE_TAKE_FRAME macro
+
+### 0.6mm Nozzle Profile
+
+**Optimized settings for 0.6mm nozzles:**
+- Default temperatures: 190°C extruder, 60°C bed (material profiles will override as needed)
+- Flow rate: 90% (reduced to prevent over-extrusion)
+- Retraction: 6.5mm (increased for larger nozzle)
+- Pressure advance: 0 (disabled to eliminate Y-axis waves)
+- Purge line: 20mm extrusion optimized for 0.6mm flow
+- Acceleration: 1500mm/s² (reduced for smoother motion)
+- Mesh offset: 3.0mm (faster probing)
+- Probe samples: 1 per point (optimized for speed)
+- 60-second thermal stabilization for cold environments
 
 ## Macros
 
