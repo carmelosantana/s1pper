@@ -1,0 +1,22 @@
+# Docker Configuration (User-specific)
+prind/docker-compose-override.yml
+
+# TLS Certificates
+*.pem
+*.key
+*.crt
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.swp
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+## Local resources
+/resources
